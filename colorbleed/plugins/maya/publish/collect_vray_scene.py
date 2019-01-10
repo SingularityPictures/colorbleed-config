@@ -29,13 +29,19 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         # Get VRay Scene instance
         vray_scenes = host.lsattr("family", "colorbleed.vrayscene")
         if not vray_scenes:
-            self.log.info("No instance found of family: `colorbleed.vrayscene`")
+            self.log.info("Skipping vrayScene collection, no "
+                          "colorbleed.vrayscene instance found..")
             return
 
         assert len(vray_scenes) == 1, "Multiple vrayscene instances found!"
         vray_scene = vray_scenes[0]
 
         vrscene_data = host.read(vray_scene)
+
+        assert cmds.ls("vraySettings", type="VRaySettingsNode"), (
+            "VRay Settings node does not exists. "
+            "Please ensure V-Ray is the current renderer."
+        )
 
         # Output data
         start_frame = int(cmds.getAttr("defaultRenderGlobals.startFrame"))
@@ -45,13 +51,6 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         file_name = context.data["currentFile"].replace("\\", "/")
         vrscene = ("vrayscene", "<Scene>", "<Scene>_<Layer>", "<Layer>")
         vrscene_output = os.path.join(work_dir, *vrscene)
-
-        vrscene_data["startFrame"] = start_frame
-        vrscene_data["endFrame"] = end_frame
-        vrscene_data["vrsceneOutput"] = vrscene_output
-
-        context.data["startFrame"] = start_frame
-        context.data["endFrame"] = end_frame
 
         # Check and create render output template for render job
         # outputDir is required for submit_publish_job
@@ -75,11 +74,12 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         render_layers = sorted(render_layers, key=sort_by_display_order)
         for layer in render_layers:
 
-            if layer.endswith("defaultRenderLayer"):
-                layer = "masterLayer"
+            subset = layer
+            if subset == "defaultRenderLayer":
+                subset = "masterLayer"
 
             data = {
-                "subset": layer,
+                "subset": subset,
                 "setMembers": layer,
 
                 "startFrame": start_frame,
@@ -97,11 +97,14 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
 
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally
-                "source": file_name
+                "source": file_name,
+
+                # Store VRay Scene additional data
+                "vrsceneOutput": vrscene_output
             }
 
             data.update(vrscene_data)
 
-            instance = context.create_instance(layer)
+            instance = context.create_instance(subset)
             self.log.info("Created: %s" % instance.name)
             instance.data.update(data)

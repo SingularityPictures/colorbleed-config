@@ -33,9 +33,11 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
             end += handles
 
         attrs = instance.data.get("attr", "").split(";")
+        attrs = [value for value in attrs if value.strip()]
         attrs += ["cbId"]
 
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
+        attr_prefixes = [value for value in attr_prefixes if value.strip()]
 
         # Get extra export arguments
         writeColorSets = instance.data.get("writeColorSets", False)
@@ -57,6 +59,12 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
             "uvWrite": True,
             "selection": True
         }
+
+        if not instance.data.get("includeParentHierarchy", True):
+            # Set the root nodes if we don't want to include parents
+            # The roots are to be considered the ones that are the actual
+            # direct members of the set
+            options["root"] = instance.data.get("setMembers")
 
         if int(cmds.about(version=True)) >= 2017:
             # Since Maya 2017 alembic supports multiple uv sets - write them.
