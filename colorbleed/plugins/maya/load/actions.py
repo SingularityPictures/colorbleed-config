@@ -6,12 +6,13 @@ from avalon import api
 
 
 class SetFrameRangeLoader(api.Loader):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Set Maya frame range"""
 
     families = ["colorbleed.animation",
                 "colorbleed.camera",
-                "colorbleed.pointcache"]
-    representations = ["abc"]
+                "colorbleed.pointcache",
+                "colorbleed.vdbcache"]
+    representations = ["abc", "vdb"]
 
     label = "Set frame range"
     order = 11
@@ -40,12 +41,13 @@ class SetFrameRangeLoader(api.Loader):
 
 
 class SetFrameRangeWithHandlesLoader(api.Loader):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Set Maya frame range including pre- and post-handles"""
 
     families = ["colorbleed.animation",
                 "colorbleed.camera",
-                "colorbleed.pointcache"]
-    representations = ["abc"]
+                "colorbleed.pointcache",
+                "colorbleed.vdbcache"]
+    representations = ["abc", "vdb"]
 
     label = "Set frame range (with handles)"
     order = 12
@@ -125,7 +127,7 @@ class ImportMayaLoader(api.Loader):
         return
 
     def display_warning(self):
-        """Show warning to ensure the user can't import models by accident
+        """Show warning to ensure the user won't import models by accident
 
         Returns:
             bool
@@ -137,11 +139,16 @@ class ImportMayaLoader(api.Loader):
         accept = QtWidgets.QMessageBox.Ok
         buttons = accept | QtWidgets.QMessageBox.Cancel
 
-        message = "Are you sure you want import this"
+        title = "Are you sure you want to import this model?"
+        message = (
+            "This will import the object in an unmanaged state.\n\n"
+            "It will become local to your scene and will not remain\n"
+            "actively linked to the Avalon pipeline."
+        )
         state = QtWidgets.QMessageBox.warning(None,
-                                               "Are you sure?",
-                                               message,
-                                               buttons=buttons,
-                                               defaultButton=accept)
+                                              title,
+                                              message,
+                                              buttons=buttons,
+                                              defaultButton=accept)
 
         return state == accept

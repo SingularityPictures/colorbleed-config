@@ -5,7 +5,6 @@ from colorbleed.maya import lib
 class CreateAnimation(avalon.maya.Creator):
     """Animation output for character rigs"""
 
-    name = "animationDefault"
     label = "Animation"
     family = "colorbleed.animation"
     icon = "male"
@@ -32,3 +31,6 @@ class CreateAnimation(avalon.maya.Creator):
 
         # Include the groups above the out_SET content
         self.data["includeParentHierarchy"] = False  # Include parent groups
+
+        # Default to exporting world-space
+        self.data["worldSpace"] = True
